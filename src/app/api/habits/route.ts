@@ -3,30 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
 
-// GET habits
 export async function GET() {
 
   const session = await auth();
 
 
-  if (!session?.user?.id) {
-
+  if (!session?.user?.id)
     return NextResponse.json(
       { message: "Unauthorized" },
       { status: 401 }
     );
-
-  }
 
 
   const habits = await prisma.habit.findMany({
 
     where: {
       userId: session.user.id
-    },
-
-    orderBy: {
-      createdAt: "desc"
     }
 
   });
@@ -38,36 +30,66 @@ export async function GET() {
 
 
 
-// CREATE habit
+
 export async function POST(req: Request) {
+
 
   const session = await auth();
 
 
-  if (!session?.user?.id) {
-
+  if (!session?.user?.id)
     return NextResponse.json(
       { message: "Unauthorized" },
       { status: 401 }
     );
 
-  }
 
 
-  const body = await req.json();
+  const { name } = await req.json();
+
 
 
   const habit = await prisma.habit.create({
 
     data: {
 
-      name: body.name,
-
-      streak: 0,
-
-      completedToday: false,
+      name,
 
       userId: session.user.id
+
+    }
+
+  });
+
+
+  return NextResponse.json(habit);
+
+
+}
+
+
+
+
+export async function PATCH(req: Request) {
+
+
+  const { id } = await req.json();
+
+
+
+  const habit = await prisma.habit.update({
+
+    where: {
+      id
+    },
+
+    data: {
+
+      completedToday: true,
+
+      streak: {
+        increment: 1
+      }
 
     }
 
@@ -80,108 +102,51 @@ export async function POST(req: Request) {
 
 
 
-// COMPLETE HABIT
-export async function PATCH(req: Request) {
 
-  const session = await auth();
-
-
-  if (!session?.user?.id) {
-
-    return NextResponse.json(
-      { message: "Unauthorized" },
-      { status: 401 }
-    );
-
-  }
-
-
-  const body = await req.json();
-
-
-  const habit = await prisma.habit.findUnique({
-
-    where: {
-      id: body.id
-    }
-
-  });
-
-
-
-  if (!habit) {
-
-    return NextResponse.json(
-      { message: "Not found" },
-      { status: 404 }
-    );
-
-  }
-
-
-
-  const updated = await prisma.habit.update({
-
-    where: {
-      id: body.id
-    },
-
-
-    data: {
-
-      completedToday: true,
-
-      streak: habit.streak + 1,
-
-      lastCompleted: new Date()
-
-    }
-
-  });
-
-
-  return NextResponse.json(updated);
-
-}
-
-
-
-// DELETE habit
+// DELETE HABIT
 export async function DELETE(req: Request) {
-
-
   const session = await auth();
 
-
   if (!session?.user?.id) {
-
     return NextResponse.json(
       { message: "Unauthorized" },
       { status: 401 }
     );
-
   }
-
 
   const { searchParams } = new URL(req.url);
-
-
   const id = searchParams.get("id");
 
+  if (!id) {
+    return NextResponse.json(
+      { message: "Missing habit ID" },
+      { status: 400 }
+    );
+  }
 
-
-  await prisma.habit.delete({
-
-    where: {
-      id: id!
-    }
-
+  // Verify ownership
+  const existingHabit = await prisma.habit.findUnique({
+    where: { id },
   });
 
+  if (!existingHabit || existingHabit.userId !== session.user.id) {
+    return NextResponse.json(
+      { message: "Not Found or Unauthorized" },
+      { status: 404 }
+    );
+  }
 
+  // Delete associated logs first
+  await prisma.habitLog.deleteMany({
+    where: { habitId: id },
+  });
+
+  // Delete the habit
+  await prisma.habit.delete({
+    where: { id },
+  });
 
   return NextResponse.json({
     message: "Deleted"
   });
-
 }

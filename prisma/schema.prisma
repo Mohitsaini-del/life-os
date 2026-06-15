@@ -49,16 +49,11 @@ model Habit {
 
   completedToday Boolean @default(false)
 
-  lastCompleted DateTime?
+  createdAt DateTime @default(now())
 
 
   userId String
-
-  user User @relation(fields:[userId], references:[id])
-
-
-  createdAt DateTime @default(now())
-
+  user User @relation(fields: [userId], references: [id])
   logs HabitLog[]
 }
 
