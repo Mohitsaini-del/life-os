@@ -6,9 +6,8 @@ import { useEffect, useState } from "react";
 export default function Habits() {
 
 
-  const [name, setName] = useState("");
-
   const [habits, setHabits] = useState<any[]>([]);
+  const [name, setName] = useState("");
 
 
 
@@ -26,7 +25,17 @@ export default function Habits() {
 
 
 
+  useEffect(() => {
+
+    loadHabits();
+
+  }, [])
+
+
+
+
   async function addHabit() {
+
 
     if (!name) return;
 
@@ -51,6 +60,7 @@ export default function Habits() {
     loadHabits();
 
   }
+
 
 
 
@@ -80,49 +90,25 @@ export default function Habits() {
 
 
 
-  async function deleteHabit(id: string) {
-
-
-    await fetch(`/api/habits?id=${id}`, {
-
-      method: "DELETE"
-
-    });
-
-
-    loadHabits();
-
-  }
-
-
-
-  useEffect(() => {
-
-    loadHabits();
-
-  }, []);
-
-
-
   return (
 
-    <div>
+    <div className="p-10">
 
 
-      <h1 className="text-4xl font-bold">
+      <h1 className="text-5xl font-bold">
         Habits 🔥
       </h1>
 
 
 
-      <div className="flex gap-3 mt-8">
+      <div className="mt-8 flex gap-3">
 
 
         <input
 
-          className="border p-3 rounded-lg"
+          className="border p-3 rounded w-80"
 
-          placeholder="New habit"
+          placeholder="New habit..."
 
           value={name}
 
@@ -135,7 +121,7 @@ export default function Habits() {
 
           onClick={addHabit}
 
-          className="bg-black text-white px-5 rounded-lg"
+          className="bg-black text-white px-5 rounded"
 
         >
           Add
@@ -159,12 +145,13 @@ export default function Habits() {
 
               key={habit.id}
 
-              className="border rounded-xl p-6"
+              className="border rounded-xl p-6 flex justify-between"
+
 
             >
 
 
-              <div className="flex justify-between">
+              <div>
 
 
                 <h2 className="text-xl font-bold">
@@ -174,24 +161,12 @@ export default function Habits() {
                 </h2>
 
 
-                <button
+                <p>
 
-                  onClick={() => deleteHabit(habit.id)}
+                  🔥 Streak: {habit.streak} days
 
-                  className="text-red-500"
+                </p>
 
-                >
-                  Delete
-                </button>
-
-
-              </div>
-
-
-
-              <div className="mt-4 text-2xl">
-
-                🔥 {habit.streak} day streak
 
               </div>
 
@@ -203,16 +178,16 @@ export default function Habits() {
 
                 onClick={() => completeHabit(habit.id)}
 
-                className="mt-4 bg-black text-white px-4 py-2 rounded-lg"
+                className="bg-green-600 text-white px-4 rounded"
 
               >
 
                 {
                   habit.completedToday
                     ?
-                    "Completed Today ✓"
+                    "Done ✅"
                     :
-                    "Mark Complete"
+                    "Complete"
                 }
 
               </button>
@@ -228,6 +203,7 @@ export default function Habits() {
 
 
       </div>
+
 
 
     </div>
