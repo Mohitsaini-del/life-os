@@ -58,21 +58,14 @@ export async function POST(req: Request) {
 
 
   const goal = await prisma.goal.create({
-
     data: {
-
       title: body.title,
-
       description: body.description || "",
-
       progress: 0,
-
       completed: false,
-
+      deadline: body.deadline ? new Date(body.deadline) : null,
       userId: session.user.id
-
     }
-
   });
 
 

@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { AuthOptions, getServerSession, Session } from "next-auth";
 
 export const authConfig: AuthOptions = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adapter: PrismaAdapter(prisma) as any,
 
   providers: [
@@ -25,8 +26,8 @@ export const authConfig: AuthOptions = {
         if (!user) return null;
 
         const match = await bcrypt.compare(
-          credentials?.password!,
-          user.password!
+          credentials?.password || "",
+          user.password || ""
         );
 
         if (!match) return null;

@@ -16,11 +16,16 @@ export async function GET() {
 
 
   const habits = await prisma.habit.findMany({
-
     where: {
       userId: session.user.id
+    },
+    include: {
+      logs: {
+        orderBy: {
+          date: "desc"
+        }
+      }
     }
-
   });
 
 
@@ -71,33 +76,46 @@ export async function POST(req: Request) {
 
 
 export async function PATCH(req: Request) {
-
-
   const { id } = await req.json();
 
-
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
 
   const habit = await prisma.habit.update({
-
     where: {
       id
     },
-
     data: {
-
       completedToday: true,
-
+      lastCompleted: today,
       streak: {
         increment: 1
       }
-
     }
-
   });
 
+  const nextDay = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  const existingLog = await prisma.habitLog.findFirst({
+    where: {
+      habitId: id,
+      date: {
+        gte: today,
+        lt: nextDay
+      }
+    }
+  });
+
+  if (!existingLog) {
+    await prisma.habitLog.create({
+      data: {
+        habitId: id,
+        date: today,
+        completed: true
+      }
+    });
+  }
 
   return NextResponse.json(habit);
-
 }
 
 
